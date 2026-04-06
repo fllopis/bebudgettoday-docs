@@ -1,0 +1,1462 @@
+openapi: 3.0.3
+info:
+  title: Be Budget Today API
+  description: REST API for Be Budget Today personal finance app
+  version: 1.0.0
+  contact:
+    name: Fernando Llopis
+    url: https://bebudgettoday.com
+
+servers:
+  - url: https://bebudgettoday.com/api
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          example: success
+        data:
+          type: object
+
+    ErrorResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          example: error
+        error:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        account_type:
+          type: string
+          enum: [standard, premium]
+        name:
+          type: string
+        email:
+          type: string
+        avatar_url:
+          type: string
+          nullable: true
+        language:
+          type: string
+          enum: [es, en]
+        currency:
+          type: string
+          enum: [EUR, USD]
+        created_at:
+          type: string
+          format: date-time
+        token:
+          type: string
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+        name:
+          type: string
+          example: Fernando Llopis
+        email:
+          type: string
+          example: user@example.com
+        account_type:
+          type: string
+          enum: [standard, premium]
+          example: premium
+        avatar_url:
+          type: string
+          nullable: true
+          example: null
+        currency:
+          type: string
+          example: EUR
+        language:
+          type: string
+          example: es
+        auth_provider:
+          type: string
+          enum: [local, google, apple]
+          example: local
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-11-12 10:58:51"
+        subscription:
+          nullable: true
+          description: >
+            Most recent subscription for the user (any status: active, cancelled or expired).
+            Only present when account_type is premium. null for standard users.
+          type: object
+          properties:
+            plan:
+              type: string
+              enum: [monthly, yearly]
+              example: monthly
+            status:
+              type: string
+              enum: [active, cancelled, expired]
+              example: active
+            store:
+              type: string
+              enum: [apple, google]
+              nullable: true
+              example: apple
+            expires_at:
+              type: string
+              format: date-time
+              example: "2026-05-01 00:00:00"
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [expense, income]
+        name:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        color:
+          type: string
+        bg_color:
+          type: string
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [expense, income]
+        amount:
+          type: number
+          format: decimal
+        description:
+          type: string
+        transaction_date:
+          type: string
+          format: date-time
+        category:
+          type: object
+          properties:
+            id:
+              type: string
+            type:
+              type: string
+            name:
+              type: string
+            icon:
+              type: string
+            color:
+              type: string
+            bg_color:
+              type: string
+
+    MonthlySummary:
+      type: object
+      properties:
+        income:
+          type: number
+        expense:
+          type: number
+        resume:
+          type: number
+
+    CategoryStats:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        icon:
+          type: string
+        color:
+          type: string
+        total:
+          type: number
+        percentage:
+          type: number
+
+    SavingMotivation:
+      type: object
+      properties:
+        showMotivation:
+          type: boolean
+        message:
+          type: string
+
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+        id_user:
+          type: string
+        plan:
+          type: string
+          enum: [monthly, yearly]
+        status:
+          type: string
+          enum: [active, cancelled, expired]
+        price:
+          type: number
+        currency:
+          type: string
+        started_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        store:
+          type: string
+          enum: [apple, google, promo]
+          nullable: true
+        store_transaction_id:
+          type: string
+          nullable: true
+        store_product_id:
+          type: string
+          nullable: true
+
+paths:
+
+  # ─────────────────────────────────────────
+  #   AUTHENTICATION
+  # ─────────────────────────────────────────
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login with email and password
+      description: Only available for local auth users (auth_provider = local)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+                password:
+                  type: string
+                  example: mypassword123
+                lang:
+                  type: string
+                  enum: [es, en]
+                  default: es
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new local account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                  example: Fernando Llopis
+                email:
+                  type: string
+                  example: user@example.com
+                password:
+                  type: string
+                  example: mypassword123
+                lang:
+                  type: string
+                  enum: [es, en]
+                  default: es
+      responses:
+        '200':
+          description: Registration successful — returns user data with JWT token
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/google:
+    post:
+      tags: [Authentication]
+      summary: Login or register with Google
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [auth_provider, provider_token]
+              properties:
+                auth_provider:
+                  type: string
+                  example: google
+                provider_token:
+                  type: string
+                  description: Google ID token
+                email:
+                  type: string
+                name:
+                  type: string
+                avatar_url:
+                  type: string
+                lang:
+                  type: string
+                  enum: [es, en]
+                  default: es
+      responses:
+        '200':
+          description: Google auth successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid Google token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/forgot-password:
+    post:
+      tags: [Authentication]
+      summary: Send 6-digit reset code to email
+      description: Always returns success even if email not found (prevents user enumeration). Only works for local auth accounts.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+                lang:
+                  type: string
+                  enum: [es, en]
+                  default: es
+      responses:
+        '200':
+          description: Code sent (or silently ignored if email not found)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+
+  /auth/verify-code:
+    post:
+      tags: [Authentication]
+      summary: Verify the 6-digit reset code
+      description: Returns a one-time reset_token valid for 10 minutes
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code]
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+                code:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+                  example: "123456"
+                lang:
+                  type: string
+                  enum: [es, en]
+                  default: es
+      responses:
+        '200':
+          description: Code verified — returns reset_token
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          reset_token:
+                            type: string
+        '400':
+          description: Invalid or expired code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/reset-password:
+    post:
+      tags: [Authentication]
+      summary: Reset password using the one-time reset token
+      description: Marks the reset code as used after success
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reset_token, new_password]
+              properties:
+                reset_token:
+                  type: string
+                  description: Token received from verify-code endpoint
+                new_password:
+                  type: string
+                  minLength: 6
+                lang:
+                  type: string
+                  enum: [es, en]
+                  default: es
+      responses:
+        '200':
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+        '400':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ─────────────────────────────────────────
+  #   USERS
+  # ─────────────────────────────────────────
+
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Get user profile
+      description: >
+        Returns the full user profile. For premium users, includes the most recent subscription
+        regardless of its status (active, cancelled or expired). Standard users return subscription: null.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en]
+            default: es
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags: [Users]
+      summary: Update user profile
+      description: Updates only provided fields — name, email, currency, language
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                currency:
+                  type: string
+                  enum: [EUR, USD]
+                language:
+                  type: string
+                  enum: [es, en]
+      responses:
+        '200':
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags: [Users]
+      summary: User account actions
+      description: Currently supports action "change_password" (local auth only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [change_password]
+                current_password:
+                  type: string
+                  description: Required when action is change_password
+                new_password:
+                  type: string
+                  minLength: 6
+                  description: Required when action is change_password
+      responses:
+        '200':
+          description: Action successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+        '400':
+          description: Invalid action or wrong password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags: [Users]
+      summary: Delete user account
+      description: Permanently deletes account. Cascades to categories, transactions and subscriptions.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en]
+      responses:
+        '200':
+          description: Account deleted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+        '400':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ─────────────────────────────────────────
+  #   CATEGORIES
+  # ─────────────────────────────────────────
+
+  /categories/:
+    get:
+      tags: [Categories]
+      summary: Get all categories by type
+      parameters:
+        - name: id_user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [expense, income]
+            default: expense
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en]
+      responses:
+        '200':
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Category'
+
+    post:
+      tags: [Categories]
+      summary: Create a new category
+      description: Standard users are limited by STANDARD_MAX_EXPENSE_CATEGORIES config
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_user, type, name, icon, color, bg_color]
+              properties:
+                id_user:
+                  type: string
+                type:
+                  type: string
+                  enum: [expense, income]
+                name:
+                  type: string
+                description:
+                  type: string
+                icon:
+                  type: string
+                  description: MaterialCommunityIcons name
+                color:
+                  type: string
+                  example: "#4CAF50"
+                bg_color:
+                  type: string
+                  example: "#E8F5E9"
+                lang:
+                  type: string
+                  enum: [es, en]
+      responses:
+        '200':
+          description: Created category
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Category'
+        '400':
+          description: Validation error or category limit reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /categories/{id}:
+    get:
+      tags: [Categories]
+      summary: Get category by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id_user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en]
+      responses:
+        '200':
+          description: Category data
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Category'
+
+    put:
+      tags: [Categories]
+      summary: Update a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_user]
+              properties:
+                id_user:
+                  type: string
+                name:
+                  type: string
+                description:
+                  type: string
+                icon:
+                  type: string
+                color:
+                  type: string
+                bg_color:
+                  type: string
+                lang:
+                  type: string
+                  enum: [es, en]
+      responses:
+        '200':
+          description: Updated category
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Category'
+
+    delete:
+      tags: [Categories]
+      summary: Delete a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id_user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en]
+      responses:
+        '200':
+          description: Category deleted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+
+  # ─────────────────────────────────────────
+  #   TRANSACTIONS
+  # ─────────────────────────────────────────
+
+  /transactions/:
+    get:
+      tags: [Transactions]
+      summary: Get transactions by date range
+      parameters:
+        - name: id_user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+            example: "2026-04-01"
+            default: First day of current month
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+            example: "2026-04-30"
+            default: Last day of current month
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [all, expense, income]
+            default: all
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en]
+      responses:
+        '200':
+          description: List of transactions grouped with category data
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Transaction'
+
+    post:
+      tags: [Transactions]
+      summary: Create a new transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_user, id_category, type, amount, description, transaction_date]
+              properties:
+                id_user:
+                  type: string
+                id_category:
+                  type: string
+                type:
+                  type: string
+                  enum: [expense, income]
+                amount:
+                  type: number
+                  format: decimal
+                  example: 25.50
+                description:
+                  type: string
+                  example: Carrefour
+                transaction_date:
+                  type: string
+                  format: date-time
+                  example: "2026-04-04 12:00:00"
+                lang:
+                  type: string
+                  enum: [es, en]
+      responses:
+        '200':
+          description: Created transaction with category data
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Transaction'
+
+  /transactions/{id}:
+    get:
+      tags: [Transactions]
+      summary: Get transaction by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id_user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: lang
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transaction with category data
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Transaction'
+
+    put:
+      tags: [Transactions]
+      summary: Update a transaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_user]
+              properties:
+                id_user:
+                  type: string
+                id_category:
+                  type: string
+                amount:
+                  type: number
+                description:
+                  type: string
+                transaction_date:
+                  type: string
+                  format: date-time
+                lang:
+                  type: string
+      responses:
+        '200':
+          description: Updated transaction
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Transaction'
+
+    delete:
+      tags: [Transactions]
+      summary: Delete a transaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id_user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: lang
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transaction deleted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+
+  # ─────────────────────────────────────────
+  #   STATISTICS / DASHBOARD
+  # ─────────────────────────────────────────
+
+  /statistics/monthly-summary:
+    get:
+      tags: [Statistics]
+      summary: Get monthly income/expense summary
+      parameters:
+        - name: id_user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+            default: First day of current month
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+            default: Last day of current month
+      responses:
+        '200':
+          description: Monthly summary
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MonthlySummary'
+
+  /statistics/categories-stats:
+    get:
+      tags: [Statistics]
+      summary: Get categories with spending stats and percentages
+      parameters:
+        - name: id_user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [expense, income]
+            default: expense
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Categories with stats
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CategoryStats'
+
+  /statistics/saving-motivation:
+    get:
+      tags: [Statistics]
+      summary: Get motivational savings message for the user
+      description: Compares current month balance vs previous month and returns a motivation message
+      parameters:
+        - name: id_user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: currency
+          in: query
+          schema:
+            type: string
+            example: EUR
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en]
+      responses:
+        '200':
+          description: Motivation message
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SavingMotivation'
+
+  # ─────────────────────────────────────────
+  #   SUBSCRIPTIONS
+  # ─────────────────────────────────────────
+
+  /subscriptions/status:
+    get:
+      tags: [Subscriptions]
+      summary: Get active subscription status for a user
+      description: Returns the active subscription for the user or null if they have no active subscription. Requires JWT.
+      parameters:
+        - name: id_user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en]
+            default: es
+      responses:
+        '200':
+          description: Active subscription or null
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        nullable: true
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            example: "1"
+                          plan:
+                            type: string
+                            enum: [monthly, yearly]
+                            example: monthly
+                          status:
+                            type: string
+                            enum: [active, cancelled, expired]
+                            example: active
+                          price:
+                            type: number
+                            example: 1.99
+                          currency:
+                            type: string
+                            example: EUR
+                          store:
+                            type: string
+                            enum: [apple, google]
+                            example: apple
+                          store_product_id:
+                            type: string
+                            example: com.bebudgettoday.premium.monthly
+                          started_at:
+                            type: string
+                            format: date-time
+                            example: "2026-04-01 00:00:00"
+                          expires_at:
+                            type: string
+                            format: date-time
+                            example: "2026-05-01 00:00:00"
+        '401':
+          description: Unauthorized — missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Missing id_user parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /subscriptions/verify:
+    post:
+      tags: [Subscriptions]
+      summary: Verify in-app purchase receipt and create subscription
+      description: >
+        Verifies an in-app purchase receipt with Apple or Google and creates the subscription record in the database.
+        On success the user account_type is upgraded to premium.
+        Apple: verifies receipt-data against buy.itunes.apple.com/verifyReceipt (falls back to sandbox on status 21007).
+        Google: verifies purchase token against Google Play Developer API.
+        Requires JWT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_user, store, store_product_id, store_transaction_id, plan]
+              properties:
+                id_user:
+                  type: string
+                  example: "1"
+                store:
+                  type: string
+                  enum: [apple, google]
+                  example: apple
+                store_product_id:
+                  type: string
+                  example: com.bebudgettoday.premium.monthly
+                store_transaction_id:
+                  type: string
+                  description: Base64-encoded receipt data (Apple) or purchase token (Google)
+                plan:
+                  type: string
+                  enum: [monthly, yearly]
+                  example: monthly
+                lang:
+                  type: string
+                  enum: [es, en]
+                  default: es
+      responses:
+        '200':
+          description: Subscription verified and created — user upgraded to premium
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            example: "1"
+                          plan:
+                            type: string
+                            enum: [monthly, yearly]
+                          status:
+                            type: string
+                            example: active
+                          price:
+                            type: number
+                            example: 1.99
+                          currency:
+                            type: string
+                            example: EUR
+                          store:
+                            type: string
+                            enum: [apple, google]
+                          store_product_id:
+                            type: string
+                            example: com.bebudgettoday.premium.monthly
+                          started_at:
+                            type: string
+                            format: date-time
+                          expires_at:
+                            type: string
+                            format: date-time
+        '400':
+          description: Validation error, invalid store, already active subscription, or receipt verification failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized — missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /subscriptions/prices:
+    get:
+      tags: [Subscriptions]
+      summary: Get subscription plan prices
+      description: >
+        Public endpoint — no JWT required.
+        Returns plan prices read from the configurations table (shortcodes: SUBSCRIPTION_PREMIUM_MONTHLY, SUBSCRIPTION_PREMIUM_YEARLY).
+        The savings_percentage is calculated dynamically against the equivalent monthly cost.
+      security: []
+      responses:
+        '200':
+          description: Plan prices
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          monthly:
+                            type: object
+                            properties:
+                              price:
+                                type: number
+                                example: 1.99
+                              currency:
+                                type: string
+                                example: EUR
+                              product_id:
+                                type: string
+                                example: com.bebudgettoday.premium.monthly
+                          yearly:
+                            type: object
+                            properties:
+                              price:
+                                type: number
+                                example: 14.99
+                              currency:
+                                type: string
+                                example: EUR
+                              product_id:
+                                type: string
+                                example: com.bebudgettoday.premium.yearly
+                              savings_percentage:
+                                type: number
+                                example: 37
