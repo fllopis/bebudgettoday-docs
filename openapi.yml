@@ -208,8 +208,26 @@ components:
       properties:
         showMotivation:
           type: boolean
+          example: true
+        tip_type:
+          type: string
+          enum: [positive, negative, neutral]
+          nullable: true
+          example: positive
         message:
           type: string
+          example: "Este mes estás ahorrando 200.00€ más que el mes pasado."
+        highlight_category:
+          type: object
+          nullable: true
+          description: Top expense category for the current month. null if no expense data.
+          properties:
+            name:
+              type: string
+              example: Hogar
+            percentage:
+              type: integer
+              example: 81
 
     Subscription:
       type: object
@@ -1199,7 +1217,12 @@ paths:
     get:
       tags: [Statistics]
       summary: Get motivational savings message for the user
-      description: Compares current month balance vs previous month and returns a motivation message
+      description: >
+        Returns a daily motivation tip for the user comparing current month vs previous month.
+        Uses lazy cache — computed once per day per user and stored in daily_motivations table.
+        Tip levels: Level 0 (no data) returns showMotivation false. Level 1 (current month only)
+        returns simple balance feedback. Level 2 (both months) returns comparison tip with euro difference.
+        highlight_category contains the top expense category and its percentage for the current month.
       parameters:
         - name: id_user
           in: query
@@ -1460,3 +1483,165 @@ paths:
                               savings_percentage:
                                 type: number
                                 example: 37
+  /config/limits:
+    get:
+      tags: [Config]
+      summary: Get standard plan limits
+      description: >
+        Public endpoint — no JWT required.
+        Returns the limitations of the standard (free) plan.
+        Values are read from the configurations table.
+        Designed to support additional limits in the future (max_transactions_per_month, etc.).
+      security: []
+      responses:
+        '200':
+          description: Standard plan limits
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          standard:
+                            type: object
+                            properties:
+                              max_categories:
+                                type: integer
+                                example: 5
+                                description: Maximum number of categories allowed for standard users
+  /exports/request:
+    post:
+      tags: [Exports]
+      summary: Request a data export
+      description: >
+        Registers a new export request for the authenticated user.
+        Only one pending or processing request is allowed per user at a time.
+        The export is processed daily by a cron job and sent to the user's email as a CSV attachment.
+        The CSV includes all transactions ordered from newest to oldest, translated to the user's language.
+        Requires JWT. Premium feature only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_user]
+              properties:
+                id_user:
+                  type: string
+                  example: "1"
+                lang:
+                  type: string
+                  enum: [es, en]
+                  default: es
+      responses:
+        '200':
+          description: Export request registered successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            example: "Solicitud registrada correctamente. Recibirás tu exportación por email en las próximas 24 horas."
+        '400':
+          description: Already has a pending request or user not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized — missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /webhooks/revenuecat:
+    post:
+      tags: [Webhooks]
+      summary: RevenueCat subscription webhook
+      description: >
+        Receives asynchronous subscription events from RevenueCat.
+        Authenticated via a shared secret in the Authorization header — no JWT required.
+        Always returns 200 so RevenueCat does not retry.
+        Handled events: INITIAL_PURCHASE, RENEWAL, CANCELLATION, EXPIRATION, BILLING_ISSUE.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                api_version:
+                  type: string
+                  example: "1.0"
+                event:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [INITIAL_PURCHASE, RENEWAL, CANCELLATION, EXPIRATION, BILLING_ISSUE]
+                      example: INITIAL_PURCHASE
+                    app_user_id:
+                      type: string
+                      description: Maps to the user id in our database
+                      example: "1"
+                    product_id:
+                      type: string
+                      example: com.bebudgettoday.premium.monthly
+                    period_type:
+                      type: string
+                      example: NORMAL
+                    purchased_at_ms:
+                      type: integer
+                      example: 1712345678000
+                    expiration_at_ms:
+                      type: integer
+                      example: 1714937678000
+                    store:
+                      type: string
+                      enum: [APP_STORE, PLAY_STORE]
+                      example: APP_STORE
+                    environment:
+                      type: string
+                      enum: [PRODUCTION, SANDBOX]
+                      example: SANDBOX
+                    price_in_purchased_currency:
+                      type: number
+                      example: 1.99
+                    currency:
+                      type: string
+                      example: EUR
+                    transaction_id:
+                      type: string
+                      example: "2000000XXXXXXXXX"
+                    original_transaction_id:
+                      type: string
+                      example: "2000000XXXXXXXXX"
+      responses:
+        '200':
+          description: Webhook received and processed — always 200 to prevent RevenueCat retries
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            example: "Webhook processed"
