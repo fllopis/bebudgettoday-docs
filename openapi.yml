@@ -1262,6 +1262,181 @@ paths:
                       data:
                         $ref: '#/components/schemas/SavingMotivation'
 
+
+  /statistics/annual-summary:
+    get:
+      tags: [Statistics]
+      summary: Get annual financial summary
+      description: >
+        Returns the full-year financial summary for a user including total income, expense, balance,
+        best month (highest balance) and worst month (lowest balance).
+        Month names are translated according to the lang parameter.
+        Returns zeros and null months if no data exists for the year.
+        Requires JWT. Premium feature.
+      parameters:
+        - name: id_user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+            example: 2026
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en]
+            default: es
+      responses:
+        '200':
+          description: Annual summary
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          year:
+                            type: integer
+                            example: 2026
+                          income:
+                            type: number
+                            example: 12450.00
+                          expense:
+                            type: number
+                            example: 8320.00
+                          balance:
+                            type: number
+                            example: 4130.00
+                          best_month:
+                            nullable: true
+                            type: object
+                            properties:
+                              month:
+                                type: integer
+                                example: 5
+                              month_name:
+                                type: string
+                                example: Mayo
+                              income:
+                                type: number
+                                example: 1800.00
+                              expense:
+                                type: number
+                                example: 350.00
+                              balance:
+                                type: number
+                                example: 1450.00
+                          worst_month:
+                            nullable: true
+                            type: object
+                            properties:
+                              month:
+                                type: integer
+                                example: 11
+                              month_name:
+                                type: string
+                                example: Noviembre
+                              income:
+                                type: number
+                                example: 900.00
+                              expense:
+                                type: number
+                                example: 1120.00
+                              balance:
+                                type: number
+                                example: -220.00
+        '401':
+          description: Unauthorized — missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Missing required parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /statistics/monthly-breakdown:
+    get:
+      tags: [Statistics]
+      summary: Get monthly income/expense breakdown for a full year
+      description: >
+        Returns the income, expense and balance for each of the 12 months of a given year.
+        Always returns all 12 months even if some have no transactions (value 0).
+        Month names are abbreviated for chart display and translated according to the lang parameter.
+        Requires JWT. Premium feature.
+      parameters:
+        - name: id_user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+            example: 2026
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en]
+            default: es
+      responses:
+        '200':
+          description: Monthly breakdown — always 12 elements ordered January to December
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            month:
+                              type: integer
+                              example: 1
+                            month_name:
+                              type: string
+                              example: Ene
+                            income:
+                              type: number
+                              example: 1200.00
+                            expense:
+                              type: number
+                              example: 850.00
+                            balance:
+                              type: number
+                              example: 350.00
+        '401':
+          description: Unauthorized — missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Missing required parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   # ─────────────────────────────────────────
   #   SUBSCRIPTIONS
   # ─────────────────────────────────────────
