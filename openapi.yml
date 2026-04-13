@@ -60,7 +60,7 @@ components:
           enum: [es, en]
         currency:
           type: string
-          enum: [EUR, USD]
+          enum: [EUR, USD, GBP, BRL, CHF, MXN, CAD, AUD]
         created_at:
           type: string
           format: date-time
@@ -605,7 +605,7 @@ paths:
                   type: string
                 currency:
                   type: string
-                  enum: [EUR, USD]
+                  enum: [EUR, USD, GBP, BRL, CHF, MXN, CAD, AUD]
                 language:
                   type: string
                   enum: [es, en]
@@ -1820,3 +1820,125 @@ paths:
                           message:
                             type: string
                             example: "Webhook processed"
+  /maintenance/status:
+    get:
+      tags: [Maintenance]
+      summary: Get maintenance mode status
+      description: >
+        Returns whether the app is in maintenance mode.
+        When inactive returns only maintenance_mode false.
+        When active returns maintenance_mode true with title and message
+        translated to the user's language.
+        Requires JWT.
+      parameters:
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en, fr, de, pt, it]
+            default: es
+      responses:
+        '200':
+          description: Maintenance status
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          maintenance_mode:
+                            type: boolean
+                            example: false
+                          title:
+                            type: string
+                            nullable: true
+                            description: Only present when maintenance_mode is true
+                            example: "App en mantenimiento"
+                          message:
+                            type: string
+                            nullable: true
+                            description: Only present when maintenance_mode is true
+                            example: "Estamos realizando mejoras. La app estará disponible en breve."
+        '401':
+          description: Unauthorized — missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /promo/redeem:
+    post:
+      tags: [Promo]
+      summary: Redeem a promotional code
+      description: >
+        Validates and redeems a promotional code for the authenticated user.
+        Creates a free premium subscription with the duration defined in the code.
+        Validations in order: code exists, valid date range, usage limit not reached,
+        user has no active subscription.
+        Requires JWT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_user, code]
+              properties:
+                id_user:
+                  type: string
+                  example: "1"
+                code:
+                  type: string
+                  example: "WELCOME2026"
+                lang:
+                  type: string
+                  enum: [es, en, fr, de, pt, it]
+                  default: es
+      responses:
+        '200':
+          description: Code redeemed successfully — premium subscription created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            example: "¡Código aplicado! Disfruta de Be Budget Premium."
+                          subscription:
+                            type: object
+                            properties:
+                              plan:
+                                type: string
+                                enum: [monthly, yearly]
+                                example: monthly
+                              status:
+                                type: string
+                                example: active
+                              expires_at:
+                                type: string
+                                format: date-time
+                                example: "2026-05-13 00:00:00"
+                              store:
+                                type: string
+                                example: promo
+        '400':
+          description: Validation error — invalid code, expired, max uses reached or already premium
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized — missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
