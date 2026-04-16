@@ -57,7 +57,7 @@ components:
           nullable: true
         language:
           type: string
-          enum: [es, en]
+          enum: [es, en, fr, de, pt, it]
         currency:
           type: string
           enum: [EUR, USD, GBP, BRL, CHF, MXN, CAD, AUD]
@@ -89,9 +89,11 @@ components:
           example: null
         currency:
           type: string
+          enum: [EUR, USD, GBP, BRL, CHF, MXN, CAD, AUD]
           example: EUR
         language:
           type: string
+          enum: [es, en, fr, de, pt, it]
           example: es
         auth_provider:
           type: string
@@ -118,7 +120,7 @@ components:
               example: active
             store:
               type: string
-              enum: [apple, google]
+              enum: [apple, google, promo]
               nullable: true
               example: apple
             expires_at:
@@ -246,6 +248,7 @@ components:
           type: number
         currency:
           type: string
+          enum: [EUR, USD, GBP, BRL, CHF, MXN, CAD, AUD]
         started_at:
           type: string
           format: date-time
@@ -262,6 +265,49 @@ components:
         store_product_id:
           type: string
           nullable: true
+
+    RecurringTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+        type:
+          type: string
+          enum: [expense, income]
+          example: expense
+        amount:
+          type: string
+          example: "750.00"
+        description:
+          type: string
+          example: Alquiler
+        day_of_month:
+          type: integer
+          minimum: 1
+          maximum: 30
+          example: 5
+        is_active:
+          type: boolean
+          example: true
+        category:
+          type: object
+          properties:
+            id:
+              type: string
+              example: "1"
+            name:
+              type: string
+              example: Hogar
+            icon:
+              type: string
+              example: home
+            color:
+              type: string
+              example: "#FF9800"
+            bg_color:
+              type: string
+              example: "#FFF3E0"
 
 paths:
 
@@ -291,7 +337,7 @@ paths:
                   example: mypassword123
                 lang:
                   type: string
-                  enum: [es, en]
+                  enum: [es, en, fr, de, pt, it]
                   default: es
       responses:
         '200':
@@ -336,7 +382,7 @@ paths:
                   example: mypassword123
                 lang:
                   type: string
-                  enum: [es, en]
+                  enum: [es, en, fr, de, pt, it]
                   default: es
       responses:
         '200':
@@ -384,7 +430,7 @@ paths:
                   type: string
                 lang:
                   type: string
-                  enum: [es, en]
+                  enum: [es, en, fr, de, pt, it]
                   default: es
       responses:
         '200':
@@ -424,7 +470,7 @@ paths:
                   example: user@example.com
                 lang:
                   type: string
-                  enum: [es, en]
+                  enum: [es, en, fr, de, pt, it]
                   default: es
       responses:
         '200':
@@ -466,7 +512,7 @@ paths:
                   example: "123456"
                 lang:
                   type: string
-                  enum: [es, en]
+                  enum: [es, en, fr, de, pt, it]
                   default: es
       responses:
         '200':
@@ -512,7 +558,7 @@ paths:
                   minLength: 6
                 lang:
                   type: string
-                  enum: [es, en]
+                  enum: [es, en, fr, de, pt, it]
                   default: es
       responses:
         '200':
@@ -557,7 +603,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [es, en]
+            enum: [es, en, fr, de, pt, it]
             default: es
       responses:
         '200':
@@ -592,7 +638,8 @@ paths:
           in: query
           schema:
             type: string
-            enum: [es, en]
+            enum: [es, en, fr, de, pt, it]
+            default: es
       requestBody:
         content:
           application/json:
@@ -608,7 +655,7 @@ paths:
                   enum: [EUR, USD, GBP, BRL, CHF, MXN, CAD, AUD]
                 language:
                   type: string
-                  enum: [es, en]
+                  enum: [es, en, fr, de, pt, it]
       responses:
         '200':
           description: Updated profile
@@ -642,7 +689,8 @@ paths:
           in: query
           schema:
             type: string
-            enum: [es, en]
+            enum: [es, en, fr, de, pt, it]
+            default: es
       requestBody:
         required: true
         content:
@@ -697,7 +745,8 @@ paths:
           in: query
           schema:
             type: string
-            enum: [es, en]
+            enum: [es, en, fr, de, pt, it]
+            default: es
       responses:
         '200':
           description: Account deleted
@@ -744,7 +793,8 @@ paths:
           in: query
           schema:
             type: string
-            enum: [es, en]
+            enum: [es, en, fr, de, pt, it]
+            default: es
       responses:
         '200':
           description: List of categories
@@ -792,7 +842,8 @@ paths:
                   example: "#E8F5E9"
                 lang:
                   type: string
-                  enum: [es, en]
+                  enum: [es, en, fr, de, pt, it]
+                  default: es
       responses:
         '200':
           description: Created category
@@ -831,7 +882,8 @@ paths:
           in: query
           schema:
             type: string
-            enum: [es, en]
+            enum: [es, en, fr, de, pt, it]
+            default: es
       responses:
         '200':
           description: Category data
@@ -876,7 +928,8 @@ paths:
                   type: string
                 lang:
                   type: string
-                  enum: [es, en]
+                  enum: [es, en, fr, de, pt, it]
+                  default: es
       responses:
         '200':
           description: Updated category
@@ -908,7 +961,8 @@ paths:
           in: query
           schema:
             type: string
-            enum: [es, en]
+            enum: [es, en, fr, de, pt, it]
+            default: es
       responses:
         '200':
           description: Category deleted
@@ -945,14 +999,14 @@ paths:
             type: string
             format: date
             example: "2026-04-01"
-            default: First day of current month
+            description: Default is first day of current month
         - name: end_date
           in: query
           schema:
             type: string
             format: date
             example: "2026-04-30"
-            default: Last day of current month
+            description: Default is last day of current month
         - name: type
           in: query
           schema:
@@ -963,10 +1017,11 @@ paths:
           in: query
           schema:
             type: string
-            enum: [es, en]
+            enum: [es, en, fr, de, pt, it]
+            default: es
       responses:
         '200':
-          description: List of transactions grouped with category data
+          description: List of transactions with category data
           content:
             application/json:
               schema:
@@ -1010,7 +1065,8 @@ paths:
                   example: "2026-04-04 12:00:00"
                 lang:
                   type: string
-                  enum: [es, en]
+                  enum: [es, en, fr, de, pt, it]
+                  default: es
       responses:
         '200':
           description: Created transaction with category data
@@ -1043,6 +1099,8 @@ paths:
           in: query
           schema:
             type: string
+            enum: [es, en, fr, de, pt, it]
+            default: es
       responses:
         '200':
           description: Transaction with category data
@@ -1086,6 +1144,8 @@ paths:
                   format: date-time
                 lang:
                   type: string
+                  enum: [es, en, fr, de, pt, it]
+                  default: es
       responses:
         '200':
           description: Updated transaction
@@ -1117,6 +1177,8 @@ paths:
           in: query
           schema:
             type: string
+            enum: [es, en, fr, de, pt, it]
+            default: es
       responses:
         '200':
           description: Transaction deleted
@@ -1132,6 +1194,284 @@ paths:
                         properties:
                           message:
                             type: string
+
+  # ─────────────────────────────────────────
+  #   RECURRING TRANSACTIONS
+  # ─────────────────────────────────────────
+
+  /recurring-transactions/:
+    get:
+      tags: [RecurringTransactions]
+      summary: Get all recurring transactions for a user
+      parameters:
+        - name: id_user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en, fr, de, pt, it]
+            default: es
+      responses:
+        '200':
+          description: List of recurring transactions ordered by day_of_month
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RecurringTransaction'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags: [RecurringTransactions]
+      summary: Create a new recurring transaction
+      description: Standard users are limited by STANDARD_MAX_RECURRING_TRANSACTIONS config (default 3).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_user, id_category, type, amount, description, day_of_month]
+              properties:
+                id_user:
+                  type: string
+                  example: "1"
+                id_category:
+                  type: string
+                  example: "2"
+                type:
+                  type: string
+                  enum: [expense, income]
+                amount:
+                  type: number
+                  example: 750.00
+                description:
+                  type: string
+                  example: Alquiler
+                day_of_month:
+                  type: integer
+                  minimum: 1
+                  maximum: 30
+                  example: 5
+                lang:
+                  type: string
+                  enum: [es, en, fr, de, pt, it]
+                  default: es
+      responses:
+        '200':
+          description: Created recurring transaction
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RecurringTransaction'
+        '400':
+          description: Validation error or limit reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /recurring-transactions/{id}:
+    get:
+      tags: [RecurringTransactions]
+      summary: Get a recurring transaction by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id_user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en, fr, de, pt, it]
+            default: es
+      responses:
+        '200':
+          description: Recurring transaction data
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RecurringTransaction'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags: [RecurringTransactions]
+      summary: Update a recurring transaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_user]
+              properties:
+                id_user:
+                  type: string
+                id_category:
+                  type: string
+                type:
+                  type: string
+                  enum: [expense, income]
+                amount:
+                  type: number
+                description:
+                  type: string
+                day_of_month:
+                  type: integer
+                  minimum: 1
+                  maximum: 30
+                lang:
+                  type: string
+                  enum: [es, en, fr, de, pt, it]
+                  default: es
+      responses:
+        '200':
+          description: Updated recurring transaction
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RecurringTransaction'
+        '400':
+          description: Validation error or not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags: [RecurringTransactions]
+      summary: Delete a recurring transaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id_user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en, fr, de, pt, it]
+            default: es
+      responses:
+        '200':
+          description: Recurring transaction deleted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+
+  /recurring-transactions/{id}/toggle:
+    post:
+      tags: [RecurringTransactions]
+      summary: Toggle active status of a recurring transaction
+      description: Switches is_active between 1 (active) and 0 (paused).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_user]
+              properties:
+                id_user:
+                  type: string
+                  example: "1"
+                lang:
+                  type: string
+                  enum: [es, en, fr, de, pt, it]
+                  default: es
+      responses:
+        '200':
+          description: Updated recurring transaction with new is_active value
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RecurringTransaction'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ─────────────────────────────────────────
   #   STATISTICS / DASHBOARD
@@ -1152,13 +1492,19 @@ paths:
           schema:
             type: string
             format: date
-            default: First day of current month
+            description: Default is first day of current month
         - name: end_date
           in: query
           schema:
             type: string
             format: date
-            default: Last day of current month
+            description: Default is last day of current month
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en, fr, de, pt, it]
+            default: es
       responses:
         '200':
           description: Monthly summary
@@ -1198,6 +1544,12 @@ paths:
           schema:
             type: string
             format: date
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en, fr, de, pt, it]
+            default: es
       responses:
         '200':
           description: Categories with stats
@@ -1233,6 +1585,7 @@ paths:
           in: query
           schema:
             type: string
+            enum: [EUR, USD, GBP, BRL, CHF, MXN, CAD, AUD]
             example: EUR
         - name: start_date
           in: query
@@ -1248,7 +1601,8 @@ paths:
           in: query
           schema:
             type: string
-            enum: [es, en]
+            enum: [es, en, fr, de, pt, it]
+            default: es
       responses:
         '200':
           description: Motivation message
@@ -1261,7 +1615,6 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/SavingMotivation'
-
 
   /statistics/annual-summary:
     get:
@@ -1289,7 +1642,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [es, en]
+            enum: [es, en, fr, de, pt, it]
             default: es
       responses:
         '200':
@@ -1392,7 +1745,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [es, en]
+            enum: [es, en, fr, de, pt, it]
             default: es
       responses:
         '200':
@@ -1441,6 +1794,56 @@ paths:
   #   SUBSCRIPTIONS
   # ─────────────────────────────────────────
 
+  /subscriptions/prices:
+    get:
+      tags: [Subscriptions]
+      summary: Get subscription plan prices
+      description: >
+        Public endpoint — no JWT required.
+        Returns plan prices read from the configurations table (shortcodes: SUBSCRIPTION_PREMIUM_MONTHLY, SUBSCRIPTION_PREMIUM_YEARLY).
+        The savings_percentage is calculated dynamically against the equivalent monthly cost.
+      security: []
+      responses:
+        '200':
+          description: Plan prices
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          monthly:
+                            type: object
+                            properties:
+                              price:
+                                type: number
+                                example: 1.99
+                              currency:
+                                type: string
+                                example: EUR
+                              product_id:
+                                type: string
+                                example: com.bebudgettoday.premium.monthly
+                          yearly:
+                            type: object
+                            properties:
+                              price:
+                                type: number
+                                example: 14.99
+                              currency:
+                                type: string
+                                example: EUR
+                              product_id:
+                                type: string
+                                example: com.bebudgettoday.premium.yearly
+                              savings_percentage:
+                                type: number
+                                example: 37
+
   /subscriptions/status:
     get:
       tags: [Subscriptions]
@@ -1456,7 +1859,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [es, en]
+            enum: [es, en, fr, de, pt, it]
             default: es
       responses:
         '200':
@@ -1488,10 +1891,11 @@ paths:
                             example: 1.99
                           currency:
                             type: string
+                            enum: [EUR, USD, GBP, BRL, CHF, MXN, CAD, AUD]
                             example: EUR
                           store:
                             type: string
-                            enum: [apple, google]
+                            enum: [apple, google, promo]
                             example: apple
                           store_product_id:
                             type: string
@@ -1554,7 +1958,7 @@ paths:
                   example: monthly
                 lang:
                   type: string
-                  enum: [es, en]
+                  enum: [es, en, fr, de, pt, it]
                   default: es
       responses:
         '200':
@@ -1609,18 +2013,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /subscriptions/prices:
-    get:
-      tags: [Subscriptions]
-      summary: Get subscription plan prices
+  # ─────────────────────────────────────────
+  #   PROMO
+  # ─────────────────────────────────────────
+
+  /promo/redeem:
+    post:
+      tags: [Promo]
+      summary: Redeem a promotional code
       description: >
-        Public endpoint — no JWT required.
-        Returns plan prices read from the configurations table (shortcodes: SUBSCRIPTION_PREMIUM_MONTHLY, SUBSCRIPTION_PREMIUM_YEARLY).
-        The savings_percentage is calculated dynamically against the equivalent monthly cost.
-      security: []
+        Validates and redeems a promotional code for the authenticated user.
+        Creates a free premium subscription with the duration defined in the code.
+        Validations in order: daily attempt limit, code already used by user, code exists,
+        valid date range, usage limit not reached, user has no active subscription.
+        Requires JWT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_user, code]
+              properties:
+                id_user:
+                  type: string
+                  example: "1"
+                code:
+                  type: string
+                  example: "WELCOME2026"
+                lang:
+                  type: string
+                  enum: [es, en, fr, de, pt, it]
+                  default: es
       responses:
         '200':
-          description: Plan prices
+          description: Code redeemed successfully — premium subscription created
           content:
             application/json:
               schema:
@@ -1631,63 +2058,43 @@ paths:
                       data:
                         type: object
                         properties:
-                          monthly:
+                          message:
+                            type: string
+                            example: "¡Código aplicado! Disfruta de Be Budget Premium."
+                          subscription:
                             type: object
                             properties:
-                              price:
-                                type: number
-                                example: 1.99
-                              currency:
+                              plan:
                                 type: string
-                                example: EUR
-                              product_id:
+                                enum: [monthly, yearly]
+                                example: monthly
+                              status:
                                 type: string
-                                example: com.bebudgettoday.premium.monthly
-                          yearly:
-                            type: object
-                            properties:
-                              price:
-                                type: number
-                                example: 14.99
-                              currency:
+                                example: active
+                              expires_at:
                                 type: string
-                                example: EUR
-                              product_id:
+                                format: date-time
+                                example: "2026-05-13 00:00:00"
+                              store:
                                 type: string
-                                example: com.bebudgettoday.premium.yearly
-                              savings_percentage:
-                                type: number
-                                example: 37
-  /config/limits:
-    get:
-      tags: [Config]
-      summary: Get standard plan limits
-      description: >
-        Public endpoint — no JWT required.
-        Returns the limitations of the standard (free) plan.
-        Values are read from the configurations table.
-        Designed to support additional limits in the future (max_transactions_per_month, etc.).
-      security: []
-      responses:
-        '200':
-          description: Standard plan limits
+                                example: promo
+        '400':
+          description: Validation error — invalid code, expired, max uses reached, already premium or max attempts exceeded
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          standard:
-                            type: object
-                            properties:
-                              max_categories:
-                                type: integer
-                                example: 5
-                                description: Maximum number of categories allowed for standard users
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized — missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ─────────────────────────────────────────
+  #   EXPORTS
+  # ─────────────────────────────────────────
+
   /exports/request:
     post:
       tags: [Exports]
@@ -1711,7 +2118,7 @@ paths:
                   example: "1"
                 lang:
                   type: string
-                  enum: [es, en]
+                  enum: [es, en, fr, de, pt, it]
                   default: es
       responses:
         '200':
@@ -1741,6 +2148,98 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  # ─────────────────────────────────────────
+  #   CONFIG
+  # ─────────────────────────────────────────
+
+  /config/limits:
+    get:
+      tags: [Config]
+      summary: Get standard plan limits
+      description: >
+        Public endpoint — no JWT required.
+        Returns the limitations of the standard (free) plan.
+        Values are read from the configurations table.
+      security: []
+      responses:
+        '200':
+          description: Standard plan limits
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          standard:
+                            type: object
+                            properties:
+                              max_categories:
+                                type: integer
+                                example: 5
+                                description: Maximum number of expense categories allowed for standard users
+                              max_recurring_transactions:
+                                type: integer
+                                example: 3
+                                description: Maximum number of recurring transactions allowed for standard users
+
+  # ─────────────────────────────────────────
+  #   MAINTENANCE
+  # ─────────────────────────────────────────
+
+  /maintenance/status:
+    get:
+      tags: [Maintenance]
+      summary: Get maintenance mode status
+      description: >
+        Public endpoint — no JWT required.
+        Returns whether the app is in maintenance mode.
+        When inactive returns only maintenance_mode false.
+        When active returns maintenance_mode true with title and message
+        translated to the user's language.
+      security: []
+      parameters:
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [es, en, fr, de, pt, it]
+            default: es
+      responses:
+        '200':
+          description: Maintenance status
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          maintenance_mode:
+                            type: boolean
+                            example: false
+                          title:
+                            type: string
+                            nullable: true
+                            description: Only present when maintenance_mode is true
+                            example: "App en mantenimiento"
+                          message:
+                            type: string
+                            nullable: true
+                            description: Only present when maintenance_mode is true
+                            example: "Estamos realizando mejoras. La app estará disponible en breve."
+
+  # ─────────────────────────────────────────
+  #   WEBHOOKS
+  # ─────────────────────────────────────────
+
   /webhooks/revenuecat:
     post:
       tags: [Webhooks]
@@ -1820,125 +2319,3 @@ paths:
                           message:
                             type: string
                             example: "Webhook processed"
-  /maintenance/status:
-    get:
-      tags: [Maintenance]
-      summary: Get maintenance mode status
-      description: >
-        Returns whether the app is in maintenance mode.
-        When inactive returns only maintenance_mode false.
-        When active returns maintenance_mode true with title and message
-        translated to the user's language.
-        Requires JWT.
-      parameters:
-        - name: lang
-          in: query
-          schema:
-            type: string
-            enum: [es, en, fr, de, pt, it]
-            default: es
-      responses:
-        '200':
-          description: Maintenance status
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          maintenance_mode:
-                            type: boolean
-                            example: false
-                          title:
-                            type: string
-                            nullable: true
-                            description: Only present when maintenance_mode is true
-                            example: "App en mantenimiento"
-                          message:
-                            type: string
-                            nullable: true
-                            description: Only present when maintenance_mode is true
-                            example: "Estamos realizando mejoras. La app estará disponible en breve."
-        '401':
-          description: Unauthorized — missing or invalid JWT
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /promo/redeem:
-    post:
-      tags: [Promo]
-      summary: Redeem a promotional code
-      description: >
-        Validates and redeems a promotional code for the authenticated user.
-        Creates a free premium subscription with the duration defined in the code.
-        Validations in order: code exists, valid date range, usage limit not reached,
-        user has no active subscription.
-        Requires JWT.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [id_user, code]
-              properties:
-                id_user:
-                  type: string
-                  example: "1"
-                code:
-                  type: string
-                  example: "WELCOME2026"
-                lang:
-                  type: string
-                  enum: [es, en, fr, de, pt, it]
-                  default: es
-      responses:
-        '200':
-          description: Code redeemed successfully — premium subscription created
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          message:
-                            type: string
-                            example: "¡Código aplicado! Disfruta de Be Budget Premium."
-                          subscription:
-                            type: object
-                            properties:
-                              plan:
-                                type: string
-                                enum: [monthly, yearly]
-                                example: monthly
-                              status:
-                                type: string
-                                example: active
-                              expires_at:
-                                type: string
-                                format: date-time
-                                example: "2026-05-13 00:00:00"
-                              store:
-                                type: string
-                                example: promo
-        '400':
-          description: Validation error — invalid code, expired, max uses reached or already premium
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized — missing or invalid JWT
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
